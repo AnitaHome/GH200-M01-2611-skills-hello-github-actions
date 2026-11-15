@@ -1,0 +1,34 @@
+name: Test Env Scope Hierarchy
+
+on:
+  workflow_dispatch: # 可在 GitHub Actions 頁籤直接手動點擊「Run workflow」測試
+  push:
+    branches: [ "main" ]
+
+# 1. Workflow 層級（全域預設）
+env:
+  APP_ENV: "global-default"
+
+jobs:
+  # Job A：沒有設定 Job 層級 env，會吃到 Workflow 層級的值
+  test-workflow-level:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read Workflow Env
+        run: echo "目前環境: $APP_ENV" # 預期輸出：global-default
+
+  # Job B：有設定 Job 層級與 Step 層級 env，展示覆蓋效果
+  test-override-levels:
+    runs-on: ubuntu-latest
+    # 2. Job 層級（覆蓋 Workflow 層，僅此 Job 有效）
+    env:
+      APP_ENV: "job-override"
+    steps:
+      - name: Step 1 (Step 層覆蓋)
+        # 3. Step 層級（覆蓋 Job 層，僅此 Step 有效）
+        env:
+          APP_ENV: "step-only"
+        run: echo "目前環境: $APP_ENV" # 預期輸出：step-only
+
+      - name: Step 2 (回到 Job 層)
+        run: echo "目前環境: $APP_ENV" # 預期輸出：job-override
